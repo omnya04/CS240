@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS242 Theory of Computing - Study App</title>
+<style>
+    :root {
+        --primary: #2c3e50;
+        --secondary: #34495e;
+        --accent: #3498db;
+        --light: #ecf0f1;
+        --success: #2ecc71;
+        --danger: #e74c3c;
+    }
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        display: flex;
+        height: 100vh;
+        background-color: var(--light);
+    }
+    #sidebar {
+        width: 250px;
+        background-color: var(--primary);
+        color: white;
+        overflow-y: auto;
+        padding-top: 20px;
+    }
+    #sidebar h2 {
+        text-align: center;
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+        color: var(--accent);
+    }
+    .tab-btn {
+        width: 100%;
+        padding: 15px;
+        background: none;
+        border: none;
+        color: white;
+        text-align: left;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background 0.3s;
+    }
+    .tab-btn:hover, .tab-btn.active {
+        background-color: var(--accent);
+    }
+    #main-content {
+        flex: 1;
+        padding: 40px;
+        overflow-y: auto;
+    }
+    .card-container {
+        display: flex;
+        gap: 20px;
+        overflow-x: auto;
+        padding-bottom: 20px;
+    }
+    .flashcard {
+        min-width: 300px;
+        height: 200px;
+        perspective: 1000px;
+        cursor: pointer;
+    }
+    .flashcard-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        transition: transform 0.6s;
+        transform-style: preserve-3d;
+    }
+    .flashcard.flipped .flashcard-inner {
+        transform: rotateY(180deg);
+    }
+    .flashcard-front, .flashcard-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        box-sizing: border-box;
+        border-radius: 10px;
+        background-color: white;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        font-size: 1.1rem;
+    }
+    .flashcard-back {
+        transform: rotateY(180deg);
+        background-color: var(--accent);
+        color: white;
+    }
+    .quiz-container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        margin-top: 20px;
+    }
+    .question {
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #ddd;
+    }
+    .question p {
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+    .options label {
+        display: block;
+        margin-bottom: 10px;
+        cursor: pointer;
+    }
+    .submit-btn {
+        background-color: var(--accent);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+    .submit-btn:hover {
+        background-color: #2980b9;
+    }
+    .feedback {
+        margin-top: 10px;
+        font-weight: bold;
+    }
+    h1, h3 {
+        color: var(--primary);
+    }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+    <h2>CS242 Modules</h2>
+    <div id="tab-buttons"></div>
+</div>
+
+<div id="main-content">
+    <h1 id="module-title">Select a Module</h1>
+    <div id="flashcards-section" style="display:none;">
+        <h3>Flashcards (Click to flip)</h3>
+        <div class="card-container" id="cards-container"></div>
+    </div>
+    <div id="quiz-section" style="display:none;">
+        <h3>Quiz</h3>
+        <div class="quiz-container" id="quiz-container"></div>
+    </div>
+</div>
+
+<script>
+const studyData = {
+    "Module 1: Math Preliminaries": {
+        flashcards: [
+            {q: "What is a set?", a: "A set is a group of objects where order does not matter and there are no duplicates."},
+            {q: "What is a tree?", a: "A connected undirected graph with no cycles."},
+            {q: "What is the pigeonhole principle?", a: "If n items are put into m containers, with n > m, then at least one container must contain more than one item."}
+        ],
+        quiz: [
+            {q: "In sets, does order matter?", options: ["Yes", "No"], ans: 1},
+            {q: "A simple path is one in which:", options: ["Nodes are repeated", "No node is repeated", "It has cycles", "It is infinite"], ans: 1},
+            {q: "What is the cardinality of the empty set?", options: ["1", "Infinite", "0", "Undefined"], ans: 2}
+        ]
+    },
+    "Module 2: Finite Automata": {
+        flashcards: [
+            {q: "What is a DFA?", a: "Deterministic Finite Automata: the machine can exist in only one state at any given time."},
+            {q: "What is the difference between Moore and Mealy Machines?", a: "Moore: Output depends only on present state. Mealy: Output depends on present state and input."},
+            {q: "When is a string rejected by a DFA?", a: "If the machine ends in a non-accepting state after processing the entire string."}
+        ],
+        quiz: [
+            {q: "A DFA can exist in multiple states at the same time.", options: ["True", "False"], ans: 1},
+            {q: "In a Moore machine, the output changes only when:", options: ["The state changes", "Input changes immediately", "It enters an error state", "The machine halts"], ans: 0},
+            {q: "Finite automata are mainly used in:", options: ["Calculus", "Text search and pattern matching", "3D Graphics", "Database sorting"], ans: 1}
+        ]
+    },
+    "Module 3: Regular Expressions": {
+        flashcards: [
+            {q: "What does R+ mean?", a: "One or more repetitions. It is equivalent to R.R*"},
+            {q: "What is the precedence of Regular Expression operators?", a: "1. Kleene Star (*) 2. Concatenation 3. Union (+)"},
+            {q: "Are Regular Expressions equivalent to Finite Automata?", a: "Yes, every DFA has a regular expression and vice versa."}
+        ],
+        quiz: [
+            {q: "Which symbol represents Kleene closure (zero or more repetitions)?", options: ["+", "*", "?", "/"], ans: 1},
+            {q: "The commutative law for regular expressions states E + F =", options: ["E*F", "F + E", "EF", "F*E"], ans: 1},
+            {q: "R+ is equivalent to:", options: ["R*", "R.R*", "R+R", "R?"], ans: 1}
+        ]
+    },
+    "Module 4: Properties of RL": {
+        flashcards: [
+            {q: "What is the Pumping Lemma used for?", a: "To prove that certain languages are NOT regular."},
+            {q: "Are Regular Languages closed under intersection?", a: "Yes, they are closed under union, intersection, complementation, and concatenation."},
+            {q: "What is the purpose of state minimization?", a: "To find a DFA with the fewest possible states that accepts the same language."}
+        ],
+        quiz: [
+            {q: "The Pumping Lemma states that |y| must be:", options: ["< 0", "= 0", "> 0", "Infinite"], ans: 2},
+            {q: "If L is a regular language, its complement is:", options: ["Not regular", "Regular", "Context-Free", "Turing Recognizable"], ans: 1},
+            {q: "Which property says that operations on languages in a class produce a language in the same class?", options: ["Closure", "Decision", "Minimization", "Pumping"], ans: 0}
+        ]
+    },
+    "Module 5: CFG & CFL": {
+        flashcards: [
+            {q: "What is a Context-Free Grammar (CFG)?", a: "A notation with Variables, Terminals, Productions, and a Start Symbol used to generate Context-Free Languages."},
+            {q: "What makes a CFG ambiguous?", a: "If there exists a string which has more than one left-most derivation or parse tree."},
+            {q: "What does S denote in a CFG?", a: "The start variable (start symbol)."}
+        ],
+        quiz: [
+            {q: "Context-free languages are more powerful than:", options: ["Turing Machines", "Regular Languages", "Natural Languages", "All of the above"], ans: 1},
+            {q: "A derivation that always replaces the leftmost variable is called:", options: ["Rightmost derivation", "Leftmost derivation", "Middle derivation", "Tree derivation"], ans: 1},
+            {q: "In a CFG, symbols on the right side of a production can be:", options: ["Only Variables", "Only Terminals", "Variables and Terminals", "None"], ans: 2}
+        ]
+    },
+    "Module 6: Pushdown Automata": {
+        flashcards: [
+            {q: "What is a PDA?", a: "Pushdown Automaton: essentially an e-NFA with the addition of a stack."},
+            {q: "What are the two ways a PDA accepts?", a: "Acceptance by final state AND acceptance by empty stack."},
+            {q: "Are Non-deterministic PDAs equivalent to Deterministic PDAs?", a: "No. Non-deterministic PDAs accept all CFLs. DPDAs only accept deterministic CFLs."}
+        ],
+        quiz: [
+            {q: "What data structure does a PDA add to an NFA?", options: ["Queue", "Array", "Stack", "Tree"], ans: 2},
+            {q: "A PDA that accepts by empty stack needs final states.", options: ["True", "False"], ans: 1},
+            {q: "PDAs are the recognizing automata for:", options: ["Regular Languages", "Context-Free Languages", "Recursively Enumerable Languages", "Decidable Languages"], ans: 1}
+        ]
+    },
+    "Module 7: Properties of CFL": {
+        flashcards: [
+            {q: "What is Chomsky Normal Form (CNF)?", a: "A CFG where all productions are strictly A -> BC or A -> a."},
+            {q: "Are CFLs closed under intersection?", a: "No, CFLs are not closed under intersection or complementation."},
+            {q: "What is the CYK Algorithm?", a: "An O(n^3) algorithm to test if a string belongs to a CFG in Chomsky Normal Form."}
+        ],
+        quiz: [
+            {q: "CFLs are closed under which of the following?", options: ["Intersection", "Complementation", "Union", "Difference"], ans: 2},
+            {q: "To convert to CNF, we must first eliminate:", options: ["Variables", "Terminals", "e-productions and unit productions", "All of the above"], ans: 2},
+            {q: "The CYK algorithm relies on which programming technique?", options: ["Greedy", "Dynamic Programming", "Divide and Conquer", "Backtracking"], ans: 1}
+        ]
+    },
+    "Module 8-9: Turing Machines": {
+        flashcards: [
+            {q: "What is a Turing Machine?", a: "A powerful abstract machine with an infinite tape and a read/write head."},
+            {q: "What is a Recursively Enumerable Language?", a: "A language accepted by a Turing Machine (may loop forever if rejected)."},
+            {q: "What is a Recursive Language?", a: "A language accepted by a TM that ALWAYS halts (decidable)."}
+        ],
+        quiz: [
+            {q: "A Turing machine's tape is:", options: ["Finite", "Infinite", "Read-only", "Write-only"], ans: 1},
+            {q: "If a TM always halts on any input, the language is:", options: ["Recursive", "Recursively Enumerable", "Context-Free", "Regular"], ans: 0},
+            {q: "The transition function of a TM specifies:", options: ["New state, Symbol to write, Direction to move", "New state only", "Direction to move only", "Nothing"], ans: 0}
+        ]
+    },
+    "Module 10: Undecidability": {
+        flashcards: [
+            {q: "What is the Halting Problem?", a: "Determining if a given TM halts on a given input. It is UNDECIDABLE."},
+            {q: "What is the Diagonalization Language (Ld)?", a: "The set of strings w_i such that TM M_i does not accept w_i. Ld is not RE."},
+            {q: "What is a Universal Turing Machine?", a: "A TM that takes the description of another TM and its input, and simulates it."}
+        ],
+        quiz: [
+            {q: "The Halting Problem is:", options: ["Decidable", "Undecidable", "Regular", "Context-Free"], ans: 1},
+            {q: "Are Recursively Enumerable languages closed under complementation?", options: ["Yes", "No"], ans: 1},
+            {q: "Which language has NO Turing machine that recognizes it?", options: ["Recursive", "CFL", "Regular", "Non-RE (like Ld)"], ans: 3}
+        ]
+    },
+    "Module 11: Intractable Problems": {
+        flashcards: [
+            {q: "What is Class P?", a: "Problems solvable by a deterministic TM in polynomial time."},
+            {q: "What is Class NP?", a: "Problems solvable by a non-deterministic TM in polynomial time."},
+            {q: "What is an NP-Complete problem?", a: "A problem in NP to which all other NP problems can be reduced in polynomial time (e.g., SAT)."}
+        ],
+        quiz: [
+            {q: "What was the first problem proven to be NP-Complete?", options: ["Halting Problem", "SAT (Satisfiability)", "PCP", "Knapsack"], ans: 1},
+            {q: "If any NP-Complete problem is proven to be in P, then:", options: ["P = NP", "P != NP", "NP is empty", "Turing machines are invalid"], ans: 0},
+            {q: "The Knapsack problem belongs to which class?", options: ["P", "NP", "Undecidable", "Regular"], ans: 1}
+        ]
+    },
+    "Module 12: Additional Classes": {
+        flashcards: [
+            {q: "What is 3-SAT?", a: "A Boolean satisfiability problem where each clause has exactly 3 literals. It is NP-Complete."},
+            {q: "What is the class PS?", a: "Polynomial Space: languages recognizable by a TM using at most polynomial space."},
+            {q: "What does Savitch's Theorem state?", a: "Deterministic Polynomial Space (PS) equals Nondeterministic Polynomial Space (NPS)."}
+        ],
+        quiz: [
+            {q: "Is the 2-SAT problem NP-Complete?", options: ["Yes", "No, it is in P"], ans: 1},
+            {q: "According to Savitch's Theorem:", options: ["P = NP", "PS = NPS", "P = PS", "NP = NPS"], ans: 1},
+            {q: "A literal in boolean expressions is:", options: ["A variable or negated variable", "An AND operator", "An OR operator", "A string"], ans: 0}
+        ]
+    }
+};
+
+// Generating 62 Questions for the Final Exam
+const finalExamQuiz = [
+    {q: "1. What is a set?", options: ["Group of objects", "Machine", "Equation", "Language"], ans: 0},
+    {q: "2. The intersection of two disjoint sets is:", options: ["Universal Set", "Empty Set", "The sets themselves", "Infinite"], ans: 1},
+    {q: "3. Order matters in a set.", options: ["True", "False"], ans: 1},
+    {q: "4. A graph with no cycles is called a:", options: ["Tree", "Loop", "Network", "Matrix"], ans: 0},
+    {q: "5. A relation mapping each input to exactly one output is a:", options: ["Function", "Graph", "Subset", "Set"], ans: 0},
+    {q: "6. A Deterministic Finite Automaton (DFA) can have multiple active states.", options: ["True", "False"], ans: 1},
+    {q: "7. Which machine's output depends on present state and input?", options: ["Moore", "Mealy", "DFA", "NFA"], ans: 1},
+    {q: "8. Regular expressions represent which language class?", options: ["Context-Free", "Regular", "Decidable", "RE"], ans: 1},
+    {q: "9. The operation R* means:", options: ["One or more", "Zero or more", "Exactly one", "None"], ans: 1},
+    {q: "10. DFA and NFA have the same computational power.", options: ["True", "False"], ans: 0},
+    {q: "11. The Pumping Lemma is used to prove a language is:", options: ["Regular", "Not Regular", "Decidable", "NP"], ans: 1},
+    {q: "12. Are Regular Languages closed under intersection?", options: ["Yes", "No"], ans: 0},
+    {q: "13. The pigeonhole principle helps prove that finite automata:", options: ["Must loop for long strings", "Have infinite states", "Never halt", "Are invalid"], ans: 0},
+    {q: "14. A Context-Free Grammar has symbols on the left called:", options: ["Terminals", "Variables", "Constants", "Operators"], ans: 1},
+    {q: "15. A derivation that replaces the rightmost variable is called:", options: ["Leftmost", "Rightmost", "Top-down", "Bottom-up"], ans: 1},
+    {q: "16. If a string has multiple leftmost derivations, the CFG is:", options: ["Ambiguous", "Unambiguous", "Regular", "Invalid"], ans: 0},
+    {q: "17. PDAs use which data structure?", options: ["Queue", "Stack", "List", "Heap"], ans: 1},
+    {q: "18. PDAs accept languages by final state and by:", options: ["Timeout", "Empty stack", "Error state", "Full stack"], ans: 1},
+    {q: "19. Deterministic PDAs are strictly weaker than Nondeterministic PDAs.", options: ["True", "False"], ans: 0},
+    {q: "20. Which Normal Form restricts CFG productions to A->BC or A->a?", options: ["Chomsky", "Griebach", "Backus-Naur", "Post"], ans: 0},
+    {q: "21. Are Context-Free Languages closed under intersection?", options: ["Yes", "No"], ans: 1},
+    {q: "22. The CYK algorithm runs in what time complexity?", options: ["O(n)", "O(n^2)", "O(n^3)", "O(2^n)"], ans: 2},
+    {q: "23. A Turing Machine tape is:", options: ["Finite", "Infinite", "Read-only", "Size 100"], ans: 1},
+    {q: "24. A TM that always halts decides a language called:", options: ["Recursive", "RE", "Context-Free", "Regular"], ans: 0},
+    {q: "25. The Halting problem is:", options: ["Decidable", "Undecidable", "NP-Complete", "In P"], ans: 1},
+    {q: "26. Does the Diagonalization Language (Ld) have a Turing Machine?", options: ["Yes", "No"], ans: 1},
+    {q: "27. Problems solvable in polynomial time are in class:", options: ["P", "NP", "RE", "PS"], ans: 0},
+    {q: "28. Problems verifiable in polynomial time are in class:", options: ["P", "NP", "RE", "PS"], ans: 1},
+    {q: "29. The SAT problem is:", options: ["In P", "NP-Complete", "Undecidable", "Regular"], ans: 1},
+    {q: "30. Cook's Theorem proves that:", options: ["P=NP", "SAT is NP-Complete", "Halting is decidable", "DFA=NFA"], ans: 1},
+    {q: "31. In 3-SAT, each clause has exactly how many literals?", options: ["1", "2", "3", "4"], ans: 2},
+    {q: "32. Is 2-SAT in class P?", options: ["Yes", "No"], ans: 0},
+    {q: "33. Savitch's Theorem states that PS =", options: ["P", "NP", "NPS", "RE"], ans: 2},
+    {q: "34. What does 'QBF' stand for?", options: ["Quantified Boolean Formula", "Quick Binary Function", "Quantum Bit Field", "Query Based Format"], ans: 0},
+    {q: "35. Post's Correspondence Problem (PCP) is:", options: ["Decidable", "Undecidable", "Regular", "NP-Complete"], ans: 1},
+    {q: "36. A Moore machine's output depends on:", options: ["Inputs only", "Current state only", "Both state and input", "Tape"], ans: 1},
+    {q: "37. To convert a CFG to CNF, we eliminate:", options: ["Variables", "Terminals", "e-productions", "The start symbol"], ans: 2},
+    {q: "38. Which grammar is used for syntax checking in compilers?", options: ["Regular", "Context-Free", "Context-Sensitive", "Unrestricted"], ans: 1},
+    {q: "39. The set of all strings over an alphabet is denoted by:", options: ["E", "Sigma*", "Delta", "Gamma"], ans: 1},
+    {q: "40. A literal is:", options: ["A variable", "A negated variable", "Both a variable or a negated variable", "A string"], ans: 2},
+    {q: "41. A simple path repeats no:", options: ["Edges", "Nodes", "Cycles", "Transitions"], ans: 1},
+    {q: "42. The difference between two regular languages is:", options: ["Regular", "Not regular", "Context-Free only", "Undecidable"], ans: 0},
+    {q: "43. NFA transitions map to a:", options: ["Single state", "Subset of states", "Tape symbol", "Stack symbol"], ans: 1},
+    {q: "44. Every NFA can be converted to an equivalent DFA using:", options: ["Pumping Lemma", "Subset Construction", "CYK", "Dijkstra"], ans: 1},
+    {q: "45. An epsilon transition in NFA allows changing state without consuming input.", options: ["True", "False"], ans: 0},
+    {q: "46. The language of strings with equal 0s and 1s is:", options: ["Regular", "Context-Free", "Finite", "Undecidable"], ans: 1},
+    {q: "47. L(A) is a regular language if A is a:", options: ["PDA", "DFA", "Turing Machine", "Compiler"], ans: 1},
+    {q: "48. Is the complement of a Recursive language always Recursive?", options: ["Yes", "No"], ans: 0},
+    {q: "49. Is the complement of an RE language always RE?", options: ["Yes", "No"], ans: 1},
+    {q: "50. Which TM tape is used to hold input strings initially?", options: ["Output Tape", "Input Tape", "Random Tape", "Scratch Tape"], ans: 1},
+    {q: "51. Multi-tape TMs are more computationally powerful than single-tape TMs.", options: ["True", "False"], ans: 1},
+    {q: "52. The Knapsack problem is known to be in:", options: ["P", "NP", "Undecidable", "Regular"], ans: 1},
+    {q: "53. A graph problem finding a cycle visiting every node once is:", options: ["Node Cover", "Hamiltonian Circuit", "Euler Path", "Tree Traversal"], ans: 1},
+    {q: "54. Node cover is NP-Complete.", options: ["True", "False"], ans: 0},
+    {q: "55. If a language has a finite number of strings, it is automatically:", options: ["Regular", "Not regular", "Undecidable", "Context-Free but not Regular"], ans: 0},
+    {q: "56. Which operation concatenates a language with itself zero or more times?", options: ["Union", "Intersection", "Kleene Star", "Difference"], ans: 2},
+    {q: "57. In a PDA, a transition can push, pop, or leave the stack unchanged.", options: ["True", "False"], ans: 0},
+    {q: "58. What is the start state typically denoted as?", options: ["qf", "q0", "qa", "S"], ans: 1},
+    {q: "59. Which class does the Traveling Salesman Problem (TSP) belong to?", options: ["P", "NP-Complete", "Undecidable", "Regular"], ans: 1},
+    {q: "60. The universal Turing machine acts as a TM simulator.", options: ["True", "False"], ans: 0},
+    {q: "61. Can we decide if two CFGs define the same language?", options: ["Yes", "No (Undecidable)"], ans: 1},
+    {q: "62. The highest class in the Chomsky Hierarchy is:", options: ["Regular", "Context-Free", "Context-Sensitive", "Recursively Enumerable"], ans: 3}
+];
+
+studyData["Final Exam (62 Questions)"] = { flashcards: [], quiz: finalExamQuiz };
+
+// Initialize App
+const tabsContainer = document.getElementById('tab-buttons');
+const flashcardsSection = document.getElementById('flashcards-section');
+const quizSection = document.getElementById('quiz-section');
+const cardsContainer = document.getElementById('cards-container');
+const quizContainer = document.getElementById('quiz-container');
+const moduleTitle = document.getElementById('module-title');
+
+function loadModule(moduleName) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`btn-${moduleName.replace(/\s+/g, '-')}`).classList.add('active');
+    
+    moduleTitle.textContent = moduleName;
+    const data = studyData[moduleName];
+
+    // Load Flashcards
+    cardsContainer.innerHTML = '';
+    if(data.flashcards && data.flashcards.length > 0) {
+        flashcardsSection.style.display = 'block';
+        data.flashcards.forEach(card => {
+            const el = document.createElement('div');
+            el.className = 'flashcard';
+            el.innerHTML = `
+                <div class="flashcard-inner">
+                    <div class="flashcard-front">${card.q}</div>
+                    <div class="flashcard-back">${card.a}</div>
+                </div>
+            `;
+            el.onclick = () => el.classList.toggle('flipped');
+            cardsContainer.appendChild(el);
+        });
+    } else {
+        flashcardsSection.style.display = 'none';
+    }
+
+    // Load Quiz
+    quizContainer.innerHTML = '';
+    if(data.quiz && data.quiz.length > 0) {
+        quizSection.style.display = 'block';
+        data.quiz.forEach((qObj, index) => {
+            const qEl = document.createElement('div');
+            qEl.className = 'question';
+            
+            let optionsHtml = '';
+            qObj.options.forEach((opt, oIndex) => {
+                optionsHtml += `
+                    <label>
+                        <input type="radio" name="q${index}" value="${oIndex}"> ${opt}
+                    </label>
+                `;
+            });
+
+            qEl.innerHTML = `
+                <p>${qObj.q}</p>
+                <div class="options">${optionsHtml}</div>
+                <button class="submit-btn" onclick="checkAnswer(${index}, ${qObj.ans}, this)">Check Answer</button>
+                <div class="feedback" id="feedback-${index}"></div>
+            `;
+            quizContainer.appendChild(qEl);
+        });
+    } else {
+        quizSection.style.display = 'none';
+    }
+}
+
+function checkAnswer(qIndex, correctIndex, btn) {
+    const selected = document.querySelector(`input[name="q${qIndex}"]:checked`);
+    const feedback = document.getElementById(`feedback-${qIndex}`);
+    if (!selected) {
+        feedback.textContent = "Please select an option.";
+        feedback.style.color = "var(--danger)";
+        return;
+    }
+    if (parseInt(selected.value) === correctIndex) {
+        feedback.textContent = "Correct! ✅";
+        feedback.style.color = "var(--success)";
+    } else {
+        feedback.textContent = "Incorrect ❌";
+        feedback.style.color = "var(--danger)";
+    }
+}
+
+// Generate Tabs
+Object.keys(studyData).forEach(mod => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn';
+    btn.id = `btn-${mod.replace(/\s+/g, '-')}`;
+    btn.textContent = mod;
+    btn.onclick = () => loadModule(mod);
+    tabsContainer.appendChild(btn);
+});
+
+// Load first module by default
+loadModule(Object.keys(studyData)[0]);
+
+</script>
+</body>
+</html>
